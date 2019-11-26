@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import pymongo
 import os
 
-myclient = pymongo.MongoClient(f'mongodb://{os.environ["MONGO_URL"]}:27017',username=os.environ["MONGO_USER"],password=os.environ["MONGO_PS"])
+myclient = pymongo.MongoClient(f'mongodb://{os.environ["MONGO_URL"]}:27017',username=os.environ["MONGO_USER"],password=os.environ["MONGO_PS"], unicode_decode_error_handler='ignore')
 mydb = myclient["HTERRACOTA"]
 
 METRICAS_API   =   Blueprint('metricas_api',__name__)
