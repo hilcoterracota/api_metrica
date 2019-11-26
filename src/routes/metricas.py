@@ -45,7 +45,7 @@ def get_metricas_clean():
             if str(proseso['nombredeimagen']) not in listaprosesos:   
                 listaprosesos.append(proseso['nombredeimagen'])
                 listaprosesos_aux.append({
-                    "nombre":proseso['nombredeimagen'].replace(".exe", "").replace(".EXE", ""),
+                    "nombre":proseso['nombredeimagen'].replace(".exe", "").replace(".EXE", "").upper(),
                     "usoMemoria": kb_uso_memoria * 0.001,
                     "tiempoTotal": str(tiempo_uso_app.strftime("%H:%M:%S")),
                     "estado":proseso['estado'],
