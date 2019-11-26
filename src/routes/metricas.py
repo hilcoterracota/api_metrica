@@ -29,8 +29,6 @@ def get_metricas_clean():
             for pestania in usuario['infoprosses']:
                 if str(proseso['nombredeimagen']) == str(pestania['nombredeimagen']):
                     if str(pestania["tiempodecpu"]) != "0:00:00" and "HILCOTERRACOTA" in str(pestania["nombredeusuario"]):
-                        if "Unknown" != proseso['estado']:
-                            print(proseso['estado'])
                         lista_pestanias.append({
                             "tituloVentana": str(pestania["ttulodeventana"]),
                             "tiempoDeUso": str(pestania["tiempodecpu"])
@@ -40,7 +38,6 @@ def get_metricas_clean():
                         seconds_aux = (minutos*60)+int(time_aux[2])
                         ##FACTOR TIMEMPO USO/CPU
                         tiempo_uso_app = tiempo_uso_app + timedelta(seconds=int(seconds_aux)*5)
-                        tiempo_uso_global = tiempo_uso_global + timedelta(seconds=int(seconds_aux)*5)
                         nombre_usuario =  str(pestania["nombredeusuario"])     
                     kb_uso_memoria = kb_uso_memoria + float(str(pestania["usodememoria"]).replace("N/D", "0").replace(",", "").replace(" ", "").replace("KB", "")) 
 
@@ -52,7 +49,13 @@ def get_metricas_clean():
                     "tiempoTotal": str(tiempo_uso_app.strftime("%H:%M:%S")),
                     "estado":proseso['estado'],
                     "ventanas":lista_pestanias
-                })     
+                })   
+                time_sub_aux = str(tiempo_uso_app.strftime("%H:%M:%S")).split(":")
+                sub_minutos = (int(time_sub_aux[0])*60)+int(time_sub_aux[1])
+                sub_seconds_aux = (sub_minutos*60)+int(time_sub_aux[2])
+                tiempo_uso_global = tiempo_uso_global + timedelta(seconds=int(sub_seconds_aux))
+
+
         au = filter(lambda x: x["tiempoTotal"].split(":")[1] != "00", listaprosesos_aux)
         if(nombre_usuario != ""):
             nombre_usuario = nombre_usuario.split("\\")[1]
