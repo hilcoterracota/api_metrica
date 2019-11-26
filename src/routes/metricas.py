@@ -36,7 +36,8 @@ def get_metricas_clean():
                             "tiempoDeUso": str(pestania["tiempodecpu"])
                         })
                         time_aux = str(pestania["tiempodecpu"]).split(":")
-                        seconds_aux = ((int(time_aux[0])*60)+int(time_aux[1])*60)+int(time_aux[2])
+                        minutos = (int(time_aux[0])*60)+int(time_aux[1])
+                        seconds_aux = (minutos*60)+int(time_aux[2])
                         ##FACTOR TIMEMPO USO/CPU
                         tiempo_uso_app = tiempo_uso_app + timedelta(seconds=int(seconds_aux)*5)
                         tiempo_uso_global = tiempo_uso_global + timedelta(econds=int(seconds_aux)*5)
