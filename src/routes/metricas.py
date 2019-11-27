@@ -66,3 +66,8 @@ def get_metricas_clean():
             "tiempoUsoGlobal": str(tiempo_uso_global.strftime("%H:%M:%S"))
         })
     return dumps(snapshot), 200
+
+@METRICAS_API.route('/metricas/historico/', methods=['GET'])
+def get_metricas_history():
+    mycol = mydb["info_pc_historico"]
+    return dumps(mycol.find()), 200
