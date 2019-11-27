@@ -18,7 +18,7 @@ def get_metricas_clean():
     data = []
     for item in mycol.find():
         historico = []
-        tiempo_uso_app = datetime.strptime('00:00:00', '%H:%M:%S')
+        tiempo_uso_global = datetime.strptime('00:00:00', '%H:%M:%S')
         for proseso in item["historico"]:
             if str(proseso["fecha"]) == str(date.today()):
                 historico.append(proseso)
@@ -29,7 +29,7 @@ def get_metricas_clean():
         data.append({
             "usuario":item["usuario"],
             "historico":sorted(historico, key=lambda element: element['usoMemoria'],reverse=True),
-            "tiempoTotal":str(tiempo_uso_app)
+            "tiempoTotal":str(tiempo_uso_global)
         })
 
     return dumps(data), 200
