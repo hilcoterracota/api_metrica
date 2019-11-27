@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, date
 import pymongo
 import os
 
-myclient = pymongo.MongoClient(f'mongodb://{os.environ["MONGO_URL"]}:27017',username=os.environ["MONGO_USER"],password=os.environ["MONGO_PS"], unicode_decode_error_handler='ignore')
+myclient = pymongo.MongoClient(f'mongodb://192.168.2.2:27017',username="root",password="@H1lcotadmin", unicode_decode_error_handler='ignore')
 mydb = myclient["HTERRACOTA"]
 
 METRICAS_API   =   Blueprint('metricas_api',__name__)
@@ -29,7 +29,7 @@ def get_metricas_clean():
         data.append({
             "usuario":item["usuario"],
             "historico":sorted(historico, key=lambda element: element['usoMemoria'],reverse=True),
-            "tiempoTotal":str(datetime.strptime(str(tiempo_uso_global), '%H:%M:%S'))
+            "tiempoTotal":str(tiempo_uso_global.strftime("%H:%M:%S"))
         })
 
     return dumps(data), 200
