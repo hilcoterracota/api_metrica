@@ -22,7 +22,7 @@ def get_metricas_clean():
         for proseso in item["historico"]:
             if str(proseso["fecha"]) == str(date.today()):
                 historico.append(proseso)
-                time_sub_aux = str(proseso["tiempoTotal"].strftime("%H:%M:%S")).split(":")
+                time_sub_aux = proseso["tiempoTotal"].split(":")
                 sub_minutos = (int(time_sub_aux[0]))+int(time_sub_aux[1])
                 sub_seconds_aux = (sub_minutos)+int(time_sub_aux[2])
                 tiempo_uso_global = tiempo_uso_global + timedelta(seconds=int(sub_seconds_aux))
