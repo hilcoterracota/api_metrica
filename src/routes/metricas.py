@@ -1,6 +1,6 @@
 from flask import Blueprint
 from bson.json_util import dumps
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import pymongo
 import os
 
@@ -14,58 +14,25 @@ def get_blueprint():
 
 @METRICAS_API.route('/metricas/metricasclean/', methods=['GET'])
 def get_metricas_clean():
-    mycol = mydb["info_pc"]
-    snapshot= []
-    for usuario in mycol.find():
-        userId = str(usuario['hostiduiid'])
-        listaprosesos = []
-        listaprosesos_aux  = []
-        nombre_usuario = ""
-        tiempo_uso_global = datetime.strptime('00:00:00', '%H:%M:%S')
-        for proseso in usuario['infoprosses']: 
-            lista_pestanias = []
-            kb_uso_memoria = 0
-            tiempo_uso_app = datetime.strptime('00:00:00', '%H:%M:%S')
-            for pestania in usuario['infoprosses']:
-                if str(proseso['nombredeimagen']) == str(pestania['nombredeimagen']):
-                    if str(pestania["tiempodecpu"]) != "0:00:00" and "HILCOTERRACOTA" in str(pestania["nombredeusuario"]):
-                        lista_pestanias.append({
-                            "tituloVentana": str(pestania["ttulodeventana"]),
-                            "tiempoDeUso": str(pestania["tiempodecpu"])
-                        })
-                        time_aux = str(pestania["tiempodecpu"]).split(":")
-                        minutos = (int(time_aux[0])*60)+int(time_aux[1])
-                        seconds_aux = (minutos*60)+int(time_aux[2])
-                        ##FACTOR TIMEMPO USO/CPU
-                        tiempo_uso_app = tiempo_uso_app + timedelta(seconds=int(seconds_aux)*5)
-                        nombre_usuario =  str(pestania["nombredeusuario"])     
-                    kb_uso_memoria = kb_uso_memoria + float(str(pestania["usodememoria"]).replace("N/D", "0").replace(",", "").replace(" ", "").replace("KB", "")) 
-
-            if str(proseso['nombredeimagen']) not in listaprosesos:   
-                listaprosesos.append(proseso['nombredeimagen'])
-                listaprosesos_aux.append({
-                    "nombre":proseso['nombredeimagen'].replace(".exe", "").replace(".EXE", "").upper(),
-                    "usoMemoria": kb_uso_memoria * 0.001,
-                    "tiempoTotal": str(tiempo_uso_app.strftime("%H:%M:%S")),
-                    "estado":proseso['estado'],
-                    "ventanas":lista_pestanias
-                })   
-                time_sub_aux = str(tiempo_uso_app.strftime("%H:%M:%S")).split(":")
-                sub_minutos = (int(time_sub_aux[0])*60)+int(time_sub_aux[1])
-                sub_seconds_aux = (sub_minutos*60)+int(time_sub_aux[2])
+    mycol = mydb["info_pc_historico"]
+    data = []
+    for item in mycol.find():
+        historico = []
+        tiempo_uso_app = datetime.strptime('00:00:00', '%H:%M:%S')
+        for proseso in item["historico"]:
+            if str(proseso["fecha"]) == str(date.today()):
+                historico.append(proseso)
+                time_sub_aux = str(proseso["tiempoTotal"].strftime("%H:%M:%S")).split(":")
+                sub_minutos = (int(time_sub_aux[0]))+int(time_sub_aux[1])
+                sub_seconds_aux = (sub_minutos)+int(time_sub_aux[2])
                 tiempo_uso_global = tiempo_uso_global + timedelta(seconds=int(sub_seconds_aux))
-
-
-        au = filter(lambda x: x["tiempoTotal"].split(":")[1] != "00", listaprosesos_aux)
-        if(nombre_usuario != ""):
-            nombre_usuario = nombre_usuario.split("\\")[1]
-        snapshot.append({
-            "userId":userId,
-            "usuario":nombre_usuario,
-            "listaprosesos":sorted(list(au), key=lambda element: element['usoMemoria'],reverse=True),
-            "tiempoUsoGlobal": str(tiempo_uso_global.strftime("%H:%M:%S"))
+        data.append({
+            "usuario":item["usuario"],
+            "historico":sorted(historico, key=lambda element: element['usoMemoria'],reverse=True),
+            "tiempoTotal":str(tiempo_uso_app)
         })
-    return dumps(snapshot), 200
+
+    return dumps(data), 200
 
 @METRICAS_API.route('/metricas/historico/', methods=['GET'])
 def get_metricas_history():
