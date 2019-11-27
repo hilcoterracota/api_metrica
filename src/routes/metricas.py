@@ -29,7 +29,7 @@ def get_metricas_clean():
         data.append({
             "usuario":item["usuario"],
             "historico":sorted(historico, key=lambda element: element['usoMemoria'],reverse=True),
-            "tiempoTotal":str(tiempo_uso_global)
+            "tiempoTotal":str(datetime.strptime(str(tiempo_uso_global), '%H:%M:%S'))
         })
 
     return dumps(data), 200
