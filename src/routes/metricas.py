@@ -26,11 +26,14 @@ def get_metricas_clean():
                 sub_minutos = (int(time_sub_aux[0]))+int(time_sub_aux[1])
                 sub_seconds_aux = (sub_minutos)+int(time_sub_aux[2])
                 tiempo_uso_global = tiempo_uso_global + timedelta(seconds=int(sub_seconds_aux))
-        data.append({
-            "usuario":item["usuario"],
-            "historico":sorted(historico, key=lambda element: element['usoMemoria'],reverse=True),
-            "tiempoTotal":str(tiempo_uso_global.strftime("%H:%M:%S"))
-        })
+        if not historico:
+            print("pc apagada")
+        else:
+            data.append({
+                "usuario":item["usuario"],
+                "historico":sorted(historico, key=lambda element: element['usoMemoria'],reverse=True),
+                "tiempoTotal":str(tiempo_uso_global.strftime("%H:%M:%S"))
+            })
 
     return dumps(data), 200
 
