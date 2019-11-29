@@ -61,44 +61,73 @@ def get_metricas_clean():
 
     hoy = datetime.now()
     hora_entrada = datetime(hoy.year, hoy.month, hoy.day, hour=9, minute=0)
+    hora_salida = datetime(hoy.year, hoy.month, hoy.day, hour=18, minute=30)
+
+    hora_aux = hoy
+    if hora_salida < hoy:
+        hora_aux = hora_salida
 
     tugn_aux = str(tiempo_resumes_global_navegadores.strftime("%H:%M:%S")).split(":")
     tugnn = ((int(tugn_aux[0])*3600)+int(tugn_aux[1])*60)+int(tugn_aux[2])
     tugnnt = (tugnn/len(list(mycol.find()))) 
-    resumen_global["pNavegadores"] = round((tugnnt*100)/(datetime.now()-hora_entrada).total_seconds(),2)
+    resumen_global["pNavegadores"] = round((tugnnt*100)/(hora_aux-hora_entrada).total_seconds(),2)
 
 
     tugn_aux = str(tiempo_resumes_global_otros.strftime("%H:%M:%S")).split(":")
     tugnn = ((int(tugn_aux[0])*3600)+int(tugn_aux[1])*60)+int(tugn_aux[2])
     tugnnt = (tugnn/len(list(mycol.find()))) 
-    resumen_global["pOtros"] = round((tugnnt*100)/(datetime.now()-hora_entrada).total_seconds(),2)
+    resumen_global["pOtros"] = round((tugnnt*100)/(hora_aux-hora_entrada).total_seconds(),2)
 
     for catalogo in catalogos["info_pc_office"]:
         if catalogo in tiempo_resumes_global_office:
             tugn_aux = str(tiempo_resumes_global_office[catalogo].strftime("%H:%M:%S")).split(":")
             tugnn = ((int(tugn_aux[0])*3600)+int(tugn_aux[1])*60)+int(tugn_aux[2])
             tugnnt = (tugnn/len(list(mycol.find()))) 
-            resumen_global["p"+catalogo]= round((tugnnt*100)/(datetime.now()-hora_entrada).total_seconds(),2)
-    
+            resumen_global["p"+catalogo]= round((tugnnt*100)/(hora_aux-hora_entrada).total_seconds(),2)
+            
     data_now = {
         "users": data,
-        "chart": {
-            "type": "radar",
-            "labels": ["NAVEGADORES", "WINWORD", "EXCEL", "ONEDRIVE", "TEAMS", "OUTLOOK", "POWERPNT", "OTROS"],
-            "data": [
-                {
-                    "data": [resumen_global["pNavegadores"], resumen_global["pWINWORD"], resumen_global["pEXCEL"], resumen_global["pONEDRIVE"], resumen_global["pTEAMS"], resumen_global["pOUTLOOK"], resumen_global["pPOWERPNT"],resumen_global["pOtros"]],
-                    "label": str(str((datetime.now()-hora_entrada)) + str(" EN USO"))
-                }
-            ],
-            "options": {
-                "responsive": True,
-                "animation": {
-                    "duration": 0
-                }
+        "charts": []
+    }
+    data_now["charts"].append({
+        "type": "radar",
+        "labels": ["NAVEGADORES", "WINWORD", "EXCEL", "ONEDRIVE", "TEAMS", "OUTLOOK", "POWERPNT", "OTROS"],
+        "data": [
+            {
+                "data": [resumen_global["pNavegadores"], resumen_global["pWINWORD"], resumen_global["pEXCEL"], resumen_global["pONEDRIVE"], resumen_global["pTEAMS"], resumen_global["pOUTLOOK"], resumen_global["pPOWERPNT"],resumen_global["pOtros"]],
+                "label": str(str((hora_aux-hora_entrada)).split(".")[0] + str(" EN USO"))
+            }
+        ],
+        "options": {
+            "responsive": True,
+            "animation": {
+                "duration": 0
             }
         }
-    }
+    })
+    p_uso = 0
+
+    for porsentaje in data_now["charts"][0]["data"][0]["data"]:
+        p_uso = p_uso + porsentaje
+        
+    data_now["charts"].append({
+        "type": "pie",
+        "labels": ["EN USO", "ESTATICA"],
+        "data": [
+            {
+                "data": [round(p_uso,2),round((100-round(p_uso,2)),2)]
+            }
+        ],
+        "options": {
+            "responsive": True,
+            "animation": {
+                "duration": 0
+            }
+        }
+    })
+
+
+    data_now["pUso"] = round(p_uso,2)
 
     return dumps(data_now), 200
 
