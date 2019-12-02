@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, date
 import pymongo
 import os
 
-myclient = pymongo.MongoClient(f'mongodb://{os.environ["MONGO_URL"]}:27017',username=os.environ["MONGO_USER"],password=os.environ["MONGO_PS"], unicode_decode_error_handler='ignore')
+myclient = pymongo.MongoClient(f'mongodb://192.168.2.2:27017',username="root",password="@H1lcotadmin", unicode_decode_error_handler='ignore')
 mydb = myclient["HTERRACOTA"]
 
 METRICAS_API   =   Blueprint('metricas_api',__name__)
@@ -138,5 +138,6 @@ def get_metricas_history():
 
 @METRICAS_API.route('/metricas/personalizado/', methods=['POST'])
 def get_metricas_personalizado():
-    print(request.form['finicio'])
-    return 200
+    data = request.json
+    print(data["finicio"])
+    return dumps(request.json), 200
