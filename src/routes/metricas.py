@@ -1,4 +1,4 @@
-from flask import Blueprint
+from flask import Blueprint, request
 from bson.json_util import dumps
 from datetime import datetime, timedelta, date
 import pymongo
@@ -135,3 +135,8 @@ def get_metricas_clean():
 def get_metricas_history():
     mycol = mydb["info_pc_historico"]
     return dumps(mycol.find()), 200
+
+@METRICAS_API.route('/metricas/personalizado/', methods=['POST'])
+def get_metricas_personalizado():
+    print(request.form['finicio'])
+    return 200
