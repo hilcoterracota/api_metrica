@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, date
 import pymongo
 import os
 
-myclient = pymongo.MongoClient(f'mongodb://{os.environ["MONGO_URL"]}:27017',username=os.environ["MONGO_USER"],password=os.environ["MONGO_PS"], unicode_decode_error_handler='ignore') 
+myclient = pymongo.MongoClient(f'mongodb://{os.environ["MONGO_URL"]}:27017',username=os.environ["MONGO_USER"],password=os.environ["MONGO_PS"], unicode_decode_error_handler='ignore',connect = False  )
 mydb = myclient["HTERRACOTA"]
 
 METRICAS_API   =   Blueprint('metricas_api',__name__)
@@ -17,6 +17,14 @@ def get_metricas_clean():
     mycol = mydb["info_pc_historico"]
     catalogos = list(mydb["catalogos"].find())[0]
 
+    hoy = datetime.now()
+    hora_entrada = datetime(hoy.year, hoy.month, hoy.day, hour=9, minute=0)
+    hora_salida = datetime(hoy.year, hoy.month, hoy.day, hour=18, minute=30)
+
+    hora_aux = hoy
+    if hora_salida < hoy:
+        hora_aux = hora_salida
+
     data = []
     resumen_global = {}
 
@@ -26,46 +34,88 @@ def get_metricas_clean():
 
     for item in mycol.find():
         historico = []
+        tiempo_usuario_global_office = {}
+        tiempo_usuario_global_navegadores = datetime.strptime('00:00:00', '%H:%M:%S')
+        tiempo_usuario_global_otros = datetime.strptime('00:00:00', '%H:%M:%S')
         tiempo_uso_global = datetime.strptime('00:00:00', '%H:%M:%S')
+        usuario_resumen_global = {}
+
         for proseso in item["historico"]:
             if str(proseso["fecha"]) == str(date.today()) and str(proseso["nombre"]) not in catalogos["info_pc_exclude"]:
                 historico.append(proseso)          
                 h2 = str(proseso["tiempoTotal"]).split(":")
                 h2_a = ((int(h2[0])*3600)+int(h2[1])*60)+int(h2[2])
                 tiempo_uso_global = tiempo_uso_global + timedelta(seconds=int(h2_a))
-                
+
             if str(proseso["nombre"]) in catalogos["info_pc_navegadores"]:
                 tugn_ = str(proseso["tiempoTotal"]).split(":")
                 tugn = ((int(tugn_[0])*3600)+int(tugn_[1])*60)+int(tugn_[2])
                 tiempo_resumes_global_navegadores = tiempo_resumes_global_navegadores + timedelta(seconds=int(tugn))
-                
+                tiempo_usuario_global_navegadores = tiempo_usuario_global_navegadores + timedelta(seconds=int(tugn))
+
             if str(proseso["nombre"]) in catalogos["info_pc_office"]:
                 tugn_ = str(proseso["tiempoTotal"]).split(":")
                 tugn = ((int(tugn_[0])*3600)+int(tugn_[1])*60)+int(tugn_[2])
+
                 if str(proseso["nombre"]) in tiempo_resumes_global_office:
                     tiempo_resumes_global_office[str(proseso["nombre"])] = tiempo_resumes_global_office[str(proseso["nombre"])] + timedelta(seconds=int(tugn))
                 else:
                     trgf = datetime.strptime('00:00:00', '%H:%M:%S')
                     tiempo_resumes_global_office[str(proseso["nombre"])]= trgf + timedelta(seconds=int(tugn))
-                    
+
+                if str(proseso["nombre"]) in tiempo_usuario_global_office:
+                    tiempo_usuario_global_office[str(proseso["nombre"])] = tiempo_usuario_global_office[str(proseso["nombre"])] + timedelta(seconds=int(tugn))
+                else:
+                    trgf = datetime.strptime('00:00:00', '%H:%M:%S')
+                    tiempo_usuario_global_office[str(proseso["nombre"])]= trgf + timedelta(seconds=int(tugn))
+
             if str(proseso["nombre"]) not in catalogos["info_pc_office"] and str(proseso["nombre"]) not in catalogos["info_pc_navegadores"]:
                 tugn_ = str(proseso["tiempoTotal"]).split(":")
                 tugn = ((int(tugn_[0])*3600)+int(tugn_[1])*60)+int(tugn_[2])
                 tiempo_resumes_global_otros = tiempo_resumes_global_otros + timedelta(seconds=int(tugn))
-                    
+                tiempo_usuario_global_otros = tiempo_usuario_global_otros + timedelta(seconds=int(tugn))
+
+        tugn_aux = str(tiempo_usuario_global_navegadores.strftime("%H:%M:%S")).split(":")
+        tugnn = ((int(tugn_aux[0])*3600)+int(tugn_aux[1])*60)+int(tugn_aux[2])
+        usuario_resumen_global["pNavegadores"] = round((tugnn*100)/(hora_aux-hora_entrada).total_seconds(),2)
+
+        tugn_aux = str(tiempo_usuario_global_otros.strftime("%H:%M:%S")).split(":")
+        tugnn = ((int(tugn_aux[0])*3600)+int(tugn_aux[1])*60)+int(tugn_aux[2])
+        usuario_resumen_global["pOtros"] = round((tugnn*100)/(hora_aux-hora_entrada).total_seconds(),2)
+
+        for catalogo in catalogos["info_pc_office"]:
+            if catalogo in tiempo_usuario_global_office:
+                tugn_aux = str(tiempo_usuario_global_office[catalogo].strftime("%H:%M:%S")).split(":")
+                tugnn = ((int(tugn_aux[0])*3600)+int(tugn_aux[1])*60)+int(tugn_aux[2])
+                usuario_resumen_global["p"+catalogo] = round((tugnn*100)/(hora_aux-hora_entrada).total_seconds(),2)
+            else:
+                usuario_resumen_global["p"+catalogo] = 0
+        total = round(usuario_resumen_global["pNavegadores"]+ usuario_resumen_global["pWINWORD"]+ usuario_resumen_global["pEXCEL"]+ usuario_resumen_global["pONEDRIVE"]+ usuario_resumen_global["pTEAMS"]+ usuario_resumen_global["pOUTLOOK"]+ usuario_resumen_global["pPOWERPNT"]+usuario_resumen_global["pOtros"])
+        dat_25 = datetime.strptime('00:00:00', '%H:%M:%S') + timedelta(minutes=total)
         data.append({
             "usuario":item["usuario"],
             "historico":sorted(historico, key=lambda element: element['usoMemoria'],reverse=True),
-            "tiempoTotal":str(tiempo_uso_global.strftime("%H:%M:%S"))
+            "tiempoTotal":str(tiempo_uso_global.strftime("%H:%M:%S")),
+            "charts": {
+                "type": "radar",
+                "labels": ["NAVEGADORES", "WINWORD", "EXCEL", "ONEDRIVE", "TEAMS", "OUTLOOK", "POWERPNT", "OTROS"],
+                "data": [
+                    {
+                        "data": [usuario_resumen_global["pNavegadores"], usuario_resumen_global["pWINWORD"], usuario_resumen_global["pEXCEL"], usuario_resumen_global["pONEDRIVE"], usuario_resumen_global["pTEAMS"], usuario_resumen_global["pOUTLOOK"], usuario_resumen_global["pPOWERPNT"],usuario_resumen_global["pOtros"]],
+                        "label": dat_25.strftime("%H:%M:%S")
+                    }
+                ],
+                "options": {
+                    "responsive": True,
+                    "animation": {
+                        "duration": 0
+                    }
+                }
+            }
+
         })
 
-    hoy = datetime.now()
-    hora_entrada = datetime(hoy.year, hoy.month, hoy.day, hour=9, minute=0)
-    hora_salida = datetime(hoy.year, hoy.month, hoy.day, hour=18, minute=30)
 
-    hora_aux = hoy
-    if hora_salida < hoy:
-        hora_aux = hora_salida
 
     tugn_aux = str(tiempo_resumes_global_navegadores.strftime("%H:%M:%S")).split(":")
     tugnn = ((int(tugn_aux[0])*3600)+int(tugn_aux[1])*60)+int(tugn_aux[2])
@@ -84,7 +134,9 @@ def get_metricas_clean():
             tugnn = ((int(tugn_aux[0])*3600)+int(tugn_aux[1])*60)+int(tugn_aux[2])
             tugnnt = (tugnn/len(list(mycol.find()))) 
             resumen_global["p"+catalogo]= round((tugnnt*100)/(hora_aux-hora_entrada).total_seconds(),2)
-            
+        else:
+            resumen_global["p"+catalogo] = 0
+
     data_now = {
         "users": data,
         "charts": []
@@ -109,7 +161,7 @@ def get_metricas_clean():
 
     for porsentaje in data_now["charts"][0]["data"][0]["data"]:
         p_uso = p_uso + porsentaje
-        
+
     data_now["charts"].append({
         "type": "pie",
         "labels": ["EN USO", "ESTATICA"],
@@ -126,8 +178,9 @@ def get_metricas_clean():
         }
     })
 
+    data_now["tglobal"]= str((hora_aux-hora_entrada)).split(".")[0]
 
-    data_now["pUso"] = round(p_uso,2)
+
 
     return dumps(data_now), 200
 
