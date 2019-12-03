@@ -106,9 +106,8 @@ def get_metricas_clean():
                     }
                 ],
                 "options": {
-                    "responsive": True,
-                    "animation": {
-                        "duration": 0
+                    "legend": {
+                        "display": False
                     }
                 }
             }
