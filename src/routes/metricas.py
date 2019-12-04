@@ -58,7 +58,7 @@ def get_metricas_clean():
     })  
 
     resumen_aplicaciones.append({
-        "titulo":"ofmatica",
+        "titulo":"OFMATICA",
         "tTotal": sum_time_array(pd.DataFrame(data_ofmatica)["tiempoPromedio"],False),
         "apps": data_ofmatica
     })
@@ -74,7 +74,7 @@ def get_metricas_clean():
         })
         
     resumen_aplicaciones.append({
-        "titulo":"ofmatica",
+        "titulo":"APLICATIVOS",
         "tTotal": sum_time_array(pd.DataFrame(data_aplicativos)["tiempoPromedio"],False),
         "apps": data_aplicativos
     })
