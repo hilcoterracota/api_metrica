@@ -297,3 +297,18 @@ def sum_time_array(entry,promedio):
         h, m, s = item.split(':')
         t = t + timedelta(hours=int(h)/p, minutes=int(m)/p, seconds=int(s)/p)
     return t.strftime("%H:%M:%S")
+
+def sum_time_array_object(entry,promedio):
+    if len(entry) == 0:
+        return 0
+    else:
+        t = datetime.strptime('00:00:00', '%H:%M:%S')
+        for item in entry:
+            if promedio:
+                p = len(entry)
+            else:
+                p = 1
+        h, m, s = item["tiempoTotal"].split(':')
+        t = t + timedelta(hours=int(h)/p, minutes=int(m)/p, seconds=int(s)/p)
+        a,b,c = str(t.strftime("%H:%M:%S")).split(':')
+    return round(((int(a)*6300)+(int(b)*60)+int(c))/3600,2)
