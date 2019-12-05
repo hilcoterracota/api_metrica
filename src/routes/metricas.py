@@ -286,6 +286,7 @@ def get_metricas_personalizado():
     return dumps(data_now), 200
 
 def sum_time_array(entry,promedio):
+    factor_tiempo_cpu = myclient["HTERRACOTA"]["catalogos"].find()[0]["factor_tiempo_cpu"]
     t = datetime.strptime('00:00:00', '%H:%M:%S')
     for item in entry:
         if promedio:
@@ -293,10 +294,11 @@ def sum_time_array(entry,promedio):
         else:
             p = 1
         h, m, s = item.split(':')
-        t = t + timedelta(hours=int(h)/p, minutes=int(m)/p, seconds=int(s)/p)
+        t = t + timedelta(seconds=int(round((((int(h)*6300)+(int(m)*60)+int(s)) * factor_tiempo_cpu)/3600,2))/p)
     return t.strftime("%H:%M:%S")
 
 def sum_time_array_object(entry,promedio):
+    factor_tiempo_cpu = myclient["HTERRACOTA"]["catalogos"].find()[0]["factor_tiempo_cpu"]
     if len(entry) == 0:
         return 0
     else:
@@ -309,4 +311,4 @@ def sum_time_array_object(entry,promedio):
         h, m, s = item["tiempoTotal"].split(':')
         t = t + timedelta(hours=int(h)/p, minutes=int(m)/p, seconds=int(s)/p)
         a,b,c = str(t.strftime("%H:%M:%S")).split(':')
-    return round(((int(a)*6300)+(int(b)*60)+int(c))/3600,2)
+    return round((((int(a)*6300)+(int(b)*60)+int(c)) * factor_tiempo_cpu)/3600,2)
