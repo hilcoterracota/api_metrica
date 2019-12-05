@@ -195,7 +195,17 @@ def get_metricas_history_pie():
     
     return dumps(response), 200
 
-
+@METRICAS_API.route('/metricas/allnow/', methods=['POST'])
+def get_metricas_allnow():
+    response = []
+    for element in myclient["HTERRACOTA"]["info_pc_historico"].find():
+        if len(element["historico"]) != 0:
+            result.append({
+                "tTotal":sum_time_array(pd.DataFrame(element["historico"])["tiempoTotal"],False),
+                "usuario":element["usuario"],
+                "historico":element["historico"],   
+            })
+    return dumps(response), 200
 
 @METRICAS_API.route('/metricas/personalizado/', methods=['POST'])
 def get_metricas_personalizado():
