@@ -200,7 +200,7 @@ def get_metricas_allnow():
     response = []
     for element in myclient["HTERRACOTA"]["info_pc_historico"].find():
         if len(element["historico"]) != 0:
-            result.append({
+            response.append({
                 "tTotal":sum_time_array(pd.DataFrame(element["historico"])["tiempoTotal"],False),
                 "usuario":element["usuario"],
                 "historico":element["historico"],   
