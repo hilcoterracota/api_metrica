@@ -118,9 +118,7 @@ def get_metricas_history():
         data_otros.append(sum_time_array_object(list(result_otros),False))
         data_navegadores.append(sum_time_array_object(list(result_navegadores),False))
         
-
-
-    response = {
+    response = [{
         "type": "bar",
         "labels": data_labels,
         "data": [
@@ -144,7 +142,7 @@ def get_metricas_history():
         "options": {
             "responsive": True
         }
-    }
+    }]
 
     return dumps(response), 200
 
