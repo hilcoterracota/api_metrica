@@ -183,7 +183,11 @@ def get_metricas_history_pie():
     response = [{
         "type": "pie",
         "labels": ["OFMATICA","APLICATIVOS","NAVEGADORES","OTROS","SIN/USO"],
-        "data": [data_ofmatica_pie,data_aplicativos_pie,data_navegadores_pie,data_otros_pie,data_sin_uso],
+        "data": [
+            {
+                "data": [data_ofmatica_pie,data_aplicativos_pie,data_navegadores_pie,data_otros_pie,data_sin_uso]
+            }
+        ],
         "options": {
             "responsive": True
         }
