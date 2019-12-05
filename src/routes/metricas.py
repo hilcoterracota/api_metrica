@@ -81,10 +81,72 @@ def get_metricas_clean():
 
     return dumps(resumen_aplicaciones), 200
 
-@METRICAS_API.route('/metricas/historico/', methods=['GET'])
+@METRICAS_API.route('/metricas/resumenaplicativosdiariochart/', methods=['GET'])
 def get_metricas_history():
-    mycol = myclient["HTERRACOTA"]["info_pc_historico"]
-    return dumps(mycol.find()), 200
+    catalogos = myclient["HTERRACOTA"]["catalogos"].find()
+    catalogos = catalogos[0]
+    hoy = datetime.now()
+    hoy = hoy.strftime("%Y-%m-%d")
+
+    data = [] 
+    for element in myclient["HTERRACOTA"]["info_pc_historico"].find():
+        for proseso in element["historico"]:
+            data.append({
+                "usuario":element["usuario"],
+                "nombre":proseso["nombre"],
+                "tiempoTotal":proseso["tiempoTotal"],
+                "fecha":proseso["fecha"],
+            })
+
+
+    usuarios = pd.DataFrame(list(myclient["HTERRACOTA"]["info_pc_historico"].find()))["usuario"].tolist()
+
+    data_labels = []
+    data_aplicativos = []
+    data_ofmatica = []
+    data_navegadores = []
+    data_otros = []
+
+    for usuario in usuarios:
+        result_aplicativos = filter(lambda x: x["usuario"] == usuario and x["fecha"] == hoy and x["nombre"] in catalogos["info_pc_aplicativos"], data)
+        result_ofmatica    = filter(lambda x: x["usuario"] == usuario and x["fecha"] == hoy and x["nombre"] in catalogos["info_pc_office"], data) 
+        result_navegadores = filter(lambda x: x["usuario"] == usuario and x["fecha"] == hoy and x["nombre"] in catalogos["info_pc_navegadores"], data) 
+        result_otros       = filter(lambda x: x["usuario"] == usuario and x["fecha"] == hoy and x["nombre"] not in catalogos["info_pc_office"] and x["nombre"] not in catalogos["info_pc_navegadores"]and x["nombre"] not in catalogos["info_pc_aplicativos"]and x["nombre"] not in catalogos["info_pc_exclude"], data) 
+        data_labels.append(usuario)
+        data_aplicativos.append(sum_time_array_object(list(result_aplicativos),False))
+        data_ofmatica.append(sum_time_array_object(list(result_ofmatica),False))
+        data_otros.append(sum_time_array_object(list(result_otros),False))
+        data_navegadores.append(sum_time_array_object(list(result_navegadores),False))
+        
+
+
+    response = {
+        "type": "bar",
+        "labels": data_labels,
+        "data": [
+            {
+                "data": data_aplicativos,
+                "label": "APLICATIVOS"
+            },
+            {
+                "data": data_navegadores,
+                "label": "NAVEGADORES"
+            },
+            {
+                "data": data_ofmatica,
+                "label": "OFMATICA"
+            },
+            {
+                "data": data_otros,
+                "label": "OTROS"
+            }
+        ],
+        "options": {
+            "responsive": True
+        }
+    }
+
+    return dumps(response), 200
 
 @METRICAS_API.route('/metricas/personalizado/', methods=['POST'])
 def get_metricas_personalizado():
