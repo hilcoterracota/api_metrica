@@ -146,6 +146,57 @@ def get_metricas_history():
 
     return dumps(response), 200
 
+@METRICAS_API.route('/metricas/resumenaplicativosdiariochartpie/', methods=['GET'])
+def get_metricas_history_pie():
+    catalogos = myclient["HTERRACOTA"]["catalogos"].find()
+    catalogos = catalogos[0]
+    hoy = datetime.now()
+    hoy = hoy.strftime("%Y-%m-%d")
+
+    data = [] 
+    for element in myclient["HTERRACOTA"]["info_pc_historico"].find():
+        for proseso in element["historico"]:
+            data.append({
+                "usuario":element["usuario"],
+                "nombre":proseso["nombre"],
+                "tiempoTotal":proseso["tiempoTotal"],
+                "fecha":proseso["fecha"],
+            })
+
+
+    result_aplicativos_pie = filter(lambda x: x["fecha"] == hoy and x["nombre"] in catalogos["info_pc_aplicativos"], data)
+    result_ofmatica_pie    = filter(lambda x: x["fecha"] == hoy and x["nombre"] in catalogos["info_pc_office"], data) 
+    result_navegadores_pie = filter(lambda x: x["fecha"] == hoy and x["nombre"] in catalogos["info_pc_navegadores"], data) 
+    result_otros_pie       = filter(lambda x: x["fecha"] == hoy and x["nombre"] not in catalogos["info_pc_office"] and x["nombre"] not in catalogos["info_pc_navegadores"]and x["nombre"] not in catalogos["info_pc_aplicativos"]and x["nombre"] not in catalogos["info_pc_exclude"], data) 
+
+    ahora = datetime.now()
+    hora_entrada = datetime(ahora.year, ahora.month, ahora.day, hour=9, minute=0)
+    horas_laboradas = (ahora - hora_entrada).total_seconds()
+
+    data_aplicativos_pie = (sum_time_array_object( list(result_aplicativos_pie) ,False)*100)/horas_laboradas
+    data_ofmatica_pie    = (sum_time_array_object( list(result_ofmatica_pie)    ,False)*100)/horas_laboradas
+    data_otros_pie       = (sum_time_array_object( list(result_otros_pie)       ,False)*100)/horas_laboradas
+    data_navegadores_pie = (sum_time_array_object( list(result_navegadores_pie) ,False)*100)/horas_laboradas
+
+    data_sin_uso = 100-(data_aplicativos_pie+data_ofmatica_pie+data_otros_pie+data_navegadores_pie)
+
+    response = [{
+        "type": "pie",
+        "labels": ["OFMATICA","APLICATIVOS","NAVEGADORES","OTROS","SIN/USO"],
+        "data": [
+            {
+                "data": [data_ofmatica_pie,data_aplicativos_pie,data_navegadores_pie,data_otros_pie,data_sin_uso]
+            }
+        ],
+        "options": {
+            "responsive": True
+        }
+    }]
+    
+    return dumps(response), 200
+
+
+
 @METRICAS_API.route('/metricas/personalizado/', methods=['POST'])
 def get_metricas_personalizado():
     rqst = request.json
@@ -284,6 +335,7 @@ def get_metricas_personalizado():
     })
 
     return dumps(data_now), 200
+
 
 def sum_time_array(entry,promedio):
     t = datetime.strptime('00:00:00', '%H:%M:%S')
