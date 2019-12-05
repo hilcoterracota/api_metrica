@@ -195,7 +195,7 @@ def get_metricas_history_pie():
     
     return dumps(response), 200
 
-@METRICAS_API.route('/metricas/allnow/', methods=['POST'])
+@METRICAS_API.route('/metricas/allnow/', methods=['GET'])
 def get_metricas_allnow():
     response = []
     for element in myclient["HTERRACOTA"]["info_pc_historico"].find():
