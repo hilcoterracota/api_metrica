@@ -180,8 +180,7 @@ def get_metricas_history_pie():
     for app in catalogos["info_pc_navegadores"]: 
         x = dataset[dataset["nombre"] == app]
         x = x[dataset["fecha"] == hoy] 
-        for y in x["tiempoTotal"].tolist():
-            t_navegadores.append(sum_time_array(t_navegadores,True))
+        t_navegadores.append(sum_time_array(t_navegadores,True))
 
     ## APLICATIVOS
     data_aplicativos = []
