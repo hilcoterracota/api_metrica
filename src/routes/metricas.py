@@ -148,6 +148,7 @@ def get_metricas_history():
 
 @METRICAS_API.route('/metricas/resumenaplicativosdiariochartpie/', methods=['GET'])
 def get_metricas_history_pie():
+    #resumenaplicativosdiariochartpie
     catalogos = myclient["HTERRACOTA"]["catalogos"].find()
     catalogos = catalogos[0]
     hoy = datetime.now()
@@ -163,36 +164,58 @@ def get_metricas_history_pie():
                 "fecha":proseso["fecha"],
             })
 
+    dataset = pd.DataFrame(data)
+    catalogos = myclient["HTERRACOTA"]["catalogos"].find()
+    catalogos = catalogos[0]
 
-    result_aplicativos_pie = filter(lambda x: x["fecha"] == hoy and x["nombre"] in catalogos["info_pc_aplicativos"], data)
-    result_ofmatica_pie    = filter(lambda x: x["fecha"] == hoy and x["nombre"] in catalogos["info_pc_office"], data) 
-    result_navegadores_pie = filter(lambda x: x["fecha"] == hoy and x["nombre"] in catalogos["info_pc_navegadores"], data) 
-    result_otros_pie       = filter(lambda x: x["fecha"] == hoy and x["nombre"] not in catalogos["info_pc_office"] and x["nombre"] not in catalogos["info_pc_navegadores"]and x["nombre"] not in catalogos["info_pc_aplicativos"]and x["nombre"] not in catalogos["info_pc_exclude"], data) 
+    ## OFMATICA
+    data_ofmatica = []
+    for app in catalogos["info_pc_office"]: 
+        x = dataset[dataset["nombre"] == app]
+        x = x[dataset["fecha"] == hoy]
+        data_ofmatica.append(sum_time_array(x["tiempoTotal"].tolist(),True))
 
+    #NAVEGADORES
+    t_navegadores = []
+    for app in catalogos["info_pc_navegadores"]: 
+        x = dataset[dataset["nombre"] == app]
+        x = x[dataset["fecha"] == hoy] 
+        for y in x["tiempoTotal"].tolist():
+            t_navegadores.append(sum_time_array(t_navegadores,True))
+
+    ## APLICATIVOS
+    data_aplicativos = []
+    for app in catalogos["info_pc_aplicativos"]: 
+        x = dataset[dataset["nombre"] == app]
+        x = x[dataset["fecha"] == hoy]
+        data_aplicativos.append(sum_time_array(x["tiempoTotal"].tolist(),True))
+
+        
     ahora = datetime.now()
     hora_entrada = datetime(ahora.year, ahora.month, ahora.day, hour=9, minute=0)
     horas_laboradas = (ahora - hora_entrada).total_seconds()
+    horas_laboradas = horas_laboradas/3600
+    print((sum_time_array_date(data_aplicativos ,True))/(horas_laboradas))
+    print(round(sum_time_array_date(data_ofmatica ,True)/horas_laboradas,2))
 
-    data_aplicativos_pie = (sum_time_array_object( list(result_aplicativos_pie) ,False)*100)/horas_laboradas
-    data_ofmatica_pie    = (sum_time_array_object( list(result_ofmatica_pie)    ,False)*100)/horas_laboradas
-    data_otros_pie       = (sum_time_array_object( list(result_otros_pie)       ,False)*100)/horas_laboradas
-    data_navegadores_pie = (sum_time_array_object( list(result_navegadores_pie) ,False)*100)/horas_laboradas
+    data_aplicativos_pie = round(sum_time_array_date(data_aplicativos ,True)/horas_laboradas,2)
+    data_ofmatica_pie    = round(sum_time_array_date(data_ofmatica ,True)/horas_laboradas,2)
+    data_navegadores_pie = round(sum_time_array_date(t_navegadores ,True)/horas_laboradas,2)
 
-    data_sin_uso = 100-(data_aplicativos_pie+data_ofmatica_pie+data_otros_pie+data_navegadores_pie)
+    data_sin_uso = round((100-(data_aplicativos_pie+data_ofmatica_pie+data_navegadores_pie)),2)
 
     response = [{
         "type": "pie",
-        "labels": ["OFMATICA","APLICATIVOS","NAVEGADORES","OTROS","SIN/USO"],
+        "labels": ["OFMATICA","APLICATIVOS","NAVEGADORES","OTROS"],
         "data": [
             {
-                "data": [data_ofmatica_pie,data_aplicativos_pie,data_navegadores_pie,data_otros_pie,data_sin_uso]
+                "data": [data_ofmatica_pie,data_aplicativos_pie,data_navegadores_pie,data_sin_uso]
             }
         ],
         "options": {
             "responsive": True
         }
     }]
-    
     return dumps(response), 200
 
 @METRICAS_API.route('/metricas/allnow/', methods=['GET'])
@@ -357,6 +380,8 @@ def get_metricas_personalizado():
     return dumps(data_now), 200
 
 
+
+
 def sum_time_array(entry,promedio):
     t = datetime.strptime('00:00:00', '%H:%M:%S')
     factor_tiempo_cpu = myclient["HTERRACOTA"]["catalogos"].find()[0]["factor_tiempo_cpu"]
@@ -385,3 +410,17 @@ def sum_time_array_object(entry,promedio):
         t = t + timedelta(hours=int(h)/p, minutes=int(m)/p, seconds=int(s)/p)
         a,b,c = str(t.strftime("%H:%M:%S")).split(':')
     return round((((int(a)*6300)+(int(b)*60)+int(c)) * factor_tiempo_cpu)/3600,2)
+
+def sum_time_array_date(entry,promedio):
+    t = datetime.strptime('00:00:00', '%H:%M:%S')
+    factor_tiempo_cpu = myclient["HTERRACOTA"]["catalogos"].find()[0]["factor_tiempo_cpu"]
+    for item in entry:
+        if promedio:
+            p = len(entry)
+        else:
+            p = 1
+        h, m, s = item.split(':')
+        s = ((int(h)*6300)+(int(m)*60)+int(s)) 
+        t = t + timedelta(seconds=(int(s)*factor_tiempo_cpu)/p)
+        a,b,c = str(t.strftime("%H:%M:%S")).split(':')
+    return  round(((((int(a)*6300)+(int(b)*60)+int(c)) * factor_tiempo_cpu)/3600)*100,2)
