@@ -198,12 +198,22 @@ def get_metricas_history_pie():
 @METRICAS_API.route('/metricas/allnow/', methods=['GET'])
 def get_metricas_allnow():
     response = []
+    hoy = datetime.now()
+    hoy = hoy.strftime("%Y-%m-%d")
     for element in myclient["HTERRACOTA"]["info_pc_historico"].find():
-        if len(element["historico"]) != 0:
+        datos = filter(lambda x: x["fecha"] == hoy , element["historico"]) 
+        datos = list(datos)
+        if len(datos) != 0:
             response.append({
-                "tTotal":sum_time_array(pd.DataFrame(element["historico"])["tiempoTotal"],False),
+                "tTotal":sum_time_array(pd.DataFrame(datos)["tiempoTotal"],False),
                 "usuario":element["usuario"],
-                "historico":element["historico"],   
+                "historico":datos,   
+            })
+        else :
+            response.append({
+                "tTotal":'00:00:00',
+                "usuario":element["usuario"],
+                "historico":datos,   
             })
     return dumps(response), 200
 
