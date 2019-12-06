@@ -176,11 +176,11 @@ def get_metricas_history_pie():
         data_ofmatica.append(sum_time_array(x["tiempoTotal"].tolist(),True))
 
     #NAVEGADORES
-    t_navegadores = []
+    data_navegadores = []
     for app in catalogos["info_pc_navegadores"]: 
         x = dataset[dataset["nombre"] == app]
         x = x[dataset["fecha"] == hoy] 
-        t_navegadores.append(sum_time_array(x["tiempoTotal"].tolist(),True))
+        data_navegadores.append(sum_time_array(x["tiempoTotal"].tolist(),True))
 
     ## APLICATIVOS
     data_aplicativos = []
@@ -189,17 +189,15 @@ def get_metricas_history_pie():
         x = x[dataset["fecha"] == hoy]
         data_aplicativos.append(sum_time_array(x["tiempoTotal"].tolist(),True))
 
-        
+
     ahora = datetime.now()
     hora_entrada = datetime(ahora.year, ahora.month, ahora.day, hour=9, minute=0)
     horas_laboradas = (ahora - hora_entrada).total_seconds()
     horas_laboradas = horas_laboradas/3600
-    print((sum_time_array_date(data_aplicativos ,True))/(horas_laboradas))
-    print(round(sum_time_array_date(data_ofmatica ,True)/horas_laboradas,2))
 
     data_aplicativos_pie = round(sum_time_array_date(data_aplicativos ,True)/horas_laboradas,2)
     data_ofmatica_pie    = round(sum_time_array_date(data_ofmatica ,True)/horas_laboradas,2)
-    data_navegadores_pie = round(sum_time_array_date(t_navegadores ,True)/horas_laboradas,2)
+    data_navegadores_pie = round(sum_time_array_date(data_navegadores ,True)/horas_laboradas,2)
 
     data_sin_uso = round((100-(data_aplicativos_pie+data_ofmatica_pie+data_navegadores_pie)),2)
 
