@@ -241,7 +241,8 @@ def get_metricas_allnow():
 
 @METRICAS_API.route('/metricas/getindicadores/', methods=['GET'])
 def get_metricas_indicadores():
-    return dumps(myclient["HTERRACOTA"]["info_terra_ing"].find()), 200
+    response = myclient["HTERRACOTA"]["info_terra_ing"].find()
+    return dumps(list(response)), 200
 
 @METRICAS_API.route('/metricas/personalizado/', methods=['POST'])
 def get_metricas_personalizado():
