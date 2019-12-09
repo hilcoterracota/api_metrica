@@ -408,9 +408,9 @@ def sum_time_array_object(entry,promedio):
                 p = len(entry)
             else:
                 p = 1
-        h, m, s = item["tiempoTotal"].split(':')
-        t = t + timedelta(hours=int(h)/p, minutes=int(m)/p, seconds=int(s)/p)
-        a,b,c = str(t.strftime("%H:%M:%S")).split(':')
+            h, m, s = item["tiempoTotal"].split(':')
+            t = t + timedelta(hours=int(h)/p, minutes=int(m)/p, seconds=int(s)/p)
+            a,b,c = str(t.strftime("%H:%M:%S")).split(':')
     return round((((int(a)*6300)+(int(b)*60)+int(c)) * factor_tiempo_cpu)/3600,2)
 
 def sum_time_array_date(entry,promedio):
