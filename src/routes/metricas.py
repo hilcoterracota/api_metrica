@@ -334,6 +334,6 @@ def usuario_mayor_menor(data):
     maximo = ""
     if len(data) != 0:
         data_proc = data.sort_values(by="tiempoTotal")
-        minimo = f'{data_proc["usuario"].tolist()[0]} {data_proc["tiempoTotal"].tolist()[0]}'
-        maximo = f'{data_proc["usuario"].tolist()[len(data_proc)-1]} {data_proc["tiempoTotal"].tolist()[len(data_proc)-1]}'
+        minimo = f'{data_proc["usuario"].tolist()[0]} {sum_time_array_promedio([data_proc["tiempoTotal"].tolist()[0]])}'
+        maximo = f'{data_proc["usuario"].tolist()[len(data_proc)-1]} {sum_time_array_promedio([data_proc["tiempoTotal"].tolist()[len(data_proc)-1]])}'
     return [minimo,maximo]
