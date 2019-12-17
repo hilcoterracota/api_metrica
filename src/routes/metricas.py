@@ -324,10 +324,7 @@ def sum_time_array_hours(entry):
     totalSecs = 0
     timeParts = [int(s) for s in sum_time_array_promedio(entry).split(':')]
     totalSecs += (timeParts[0] * 60 + timeParts[1]) * 60 + timeParts[2]
-    r = (totalSecs/3600)*100
-    if r >100:
-        r =100
-    return round(r,2)
+    return round(totalSecs/3600,2)
 
 def usuario_mayor_menor(data):
     minimo = ""
