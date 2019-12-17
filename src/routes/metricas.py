@@ -46,21 +46,43 @@ def get_metricas_clean():
         x = x[dataset["fecha"] == hoy]
         data_ofmatica.append({
             "nombre":app,
-            "tiempoPromedio":sum_time_array_promedio(x["tiempoTotal"].tolist())
+            "tiempoPromedio":sum_time_array_promedio(x["tiempoTotal"].tolist()),
+            "mayormenor":usuario_mayor_menor(x)
         })
+
+
+    aux_nav =[]
     for app in catalogos["info_pc_navegadores"]: 
         x = dataset[dataset["nombre"] == app]
         x = x[dataset["fecha"] == hoy] 
         for y in x["tiempoTotal"].tolist():
             t_navegadores.append(y)
+        aux_nav.append({
+            "nombre":app,
+            "tiempoPromedio":sum_time_array_promedio(x["tiempoTotal"].tolist()),
+            "mayormenor":usuario_mayor_menor(x)
+        })
+            
+            
+    dacn = []
+    for alement in aux_nav:
+        for subalement in alement["mayormenor"]:
+            ut = subalement.split(" ")
+            if ut[0] != "":
+                dacn.append({
+                    "usuario":ut[0],
+                    "tiempoTotal":ut[1],
+                })
+
     data_ofmatica.append({
         "nombre":"NAVEGADORES",
-        "tiempoPromedio":sum_time_array_promedio(t_navegadores)
+        "tiempoPromedio":sum_time_array_promedio(t_navegadores),
+        "mayormenor":usuario_mayor_menor(pd.DataFrame(dacn))
     })  
 
     resumen_aplicaciones.append({
         "titulo":"OFMATICA",
-        "tTotal": sum_time_array_promedio(pd.DataFrame(data_ofmatica)["tiempoPromedio"]),
+        "tTotal": sum_time_array_clear(pd.DataFrame(data_ofmatica)["tiempoPromedio"]),
         "apps": data_ofmatica
     })
 
@@ -71,7 +93,8 @@ def get_metricas_clean():
         x = x[dataset["fecha"] == hoy]
         data_aplicativos.append({
             "nombre":app,
-            "tiempoPromedio":sum_time_array_clear(x["tiempoTotal"].tolist())
+            "tiempoPromedio":sum_time_array_promedio(x["tiempoTotal"].tolist()),
+            "mayormenor":usuario_mayor_menor(x)
         })
 
     resumen_aplicaciones.append({
@@ -79,6 +102,7 @@ def get_metricas_clean():
         "tTotal": sum_time_array_clear(pd.DataFrame(data_aplicativos)["tiempoPromedio"]),
         "apps": data_aplicativos
     })
+
 
     return dumps(resumen_aplicaciones), 200
 
@@ -111,12 +135,15 @@ def get_metricas_history():
     data_otros = []
 
     for usuario in usuarios:
-        result_aplicativos = list(filter(lambda x: x["usuario"] == usuario and x["nombre"] in catalogos["info_pc_aplicativos"], data))
-        result_ofmatica    = list(filter(lambda x: x["usuario"] == usuario and x["nombre"] in catalogos["info_pc_office"], data))
-        result_navegadores = list(filter(lambda x: x["usuario"] == usuario and x["nombre"] in catalogos["info_pc_navegadores"], data))
-        result_otros       = list(filter(lambda x: x["usuario"] == usuario and x["nombre"] not in catalogos["info_pc_office"] and x["nombre"] not in catalogos["info_pc_navegadores"]and x["nombre"] not in catalogos["info_pc_aplicativos"]and x["nombre"] not in catalogos["info_pc_exclude"], data)) 
+        result_aplicativos = list(filter(lambda x: x["usuario"] == usuario and x["nombre"]     in catalogos["info_pc_aplicativos"]  , data))
+        result_ofmatica    = list(filter(lambda x: x["usuario"] == usuario and x["nombre"]     in catalogos["info_pc_office"     ]  , data))
+        result_navegadores = list(filter(lambda x: x["usuario"] == usuario and x["nombre"]     in catalogos["info_pc_navegadores"]  , data))
+        result_otros       = list(filter(lambda x: x["usuario"] == usuario and x["nombre"] not in catalogos["info_pc_office"     ]  and 
+                                                                               x["nombre"] not in catalogos["info_pc_navegadores"]  and 
+                                                                               x["nombre"] not in catalogos["info_pc_aplicativos"]  and 
+                                                                               x["nombre"] not in catalogos["info_pc_exclude"    ]  , data)) 
+       
         data_labels.append(usuario)
-
         
         if len(result_aplicativos) == 0:  
             data_aplicativos.append(0)
@@ -297,4 +324,16 @@ def sum_time_array_hours(entry):
     totalSecs = 0
     timeParts = [int(s) for s in sum_time_array_promedio(entry).split(':')]
     totalSecs += (timeParts[0] * 60 + timeParts[1]) * 60 + timeParts[2]
-    return round(totalSecs/3600,2)
+    r = (totalSecs/3600)*100
+    if r >100:
+        r =100
+    return round(r,2)
+
+def usuario_mayor_menor(data):
+    minimo = ""
+    maximo = ""
+    if len(data) != 0:
+        data_proc = data.sort_values(by="tiempoTotal")
+        minimo = f'{data_proc["usuario"].tolist()[0]} {data_proc["tiempoTotal"].tolist()[0]}'
+        maximo = f'{data_proc["usuario"].tolist()[len(data_proc)-1]} {data_proc["tiempoTotal"].tolist()[len(data_proc)-1]}'
+    return [minimo,maximo]
