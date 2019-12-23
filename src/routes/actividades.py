@@ -272,6 +272,23 @@ def get_metricas_history_pie():
     }]
     return dumps(response), 200
 
+@ACTIVIDADES_API.route('/metricas/allnowactividades/', methods=['GET'])
+def get_metricas_allnow():
+    response = []
+    hoy = datetime.now()
+    hoy = hoy.strftime("%Y-%m-%d")
+    for element in myclient["HTERRACOTA"]["ipcht"].find():
+
+        datos = filter(lambda x: x["timestamp"].split("T")[0] == hoy , element["app_events"]) 
+
+        datos = list(datos)
+
+        response.append({
+            "usuario":element["host"],
+            "historico":f'http://{element["ip"]}:5600',   
+        })
+    return dumps(response), 200
+
 
 def sum_time_array_clear_seconds(entry):
     totalSecs = 0
